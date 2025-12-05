@@ -12,13 +12,13 @@ Butterworth filters provide a maximally flat magnitude response.
 
 ### 2.1 Magnitude
 
-|H(jω)| = 1 / sqrt(1 + (ω/ωc)^(2N))
+$$ |H(jω)| = 1 / sqrt(1 + (ω/ωc)^(2N)) $$
 
 ### 2.2 Poles
 
 Poles are equally spaced on a circle in the left half-plane:
 
-θ_k = π/2 + (2k−1)π/(2N)
+$$ θ_k = π/2 + (2k−1)π/(2N) $$
 
 ## 3. Chebyshev Filters
 
