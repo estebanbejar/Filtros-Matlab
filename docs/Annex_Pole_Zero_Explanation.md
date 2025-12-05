@@ -8,8 +8,7 @@ This annex explains the meaning of the two pole–zero diagrams displayed by the
 
 The first diagram corresponds to the **normalized low-pass prototype**, defined with:
 
-- Cutoff frequency 
-  $$ \Omega_c = 1 \, 	ext{rad/s} $$
+- Cutoff frequency  $\Omega_c = 1 {rad/s}$
 - Pole locations determined by the filter family:
   - **Butterworth:** poles uniformly distributed on a semicircle in the left-half plane.
   - **Chebyshev Type I:** poles shifted toward the imaginary axis for a steeper transition band.
@@ -41,20 +40,11 @@ These transformations replace the variable \( s \) by an expression that reshape
 
 ### Typical transformations
 
-- **LP → HP**
-  $$
-  s \longleftarrow \frac{\Omega_c^2}{s}
-  $$
+- **LP → HP**   $s \longleftarrow \frac{\Omega_c^2}{s}$
 
-- **LP → BP**
-  $$
-  s \longleftarrow \frac{s^2 + \Omega_0^2}{B s}
-  $$
+- **LP → BP**   $s \longleftarrow \frac{s^2 + \Omega_0^2}{B s}$
 
-- **LP → BS**
-  $$
-  s \longleftarrow \frac{B s}{s^2 + \Omega_0^2}
-  $$
+- **LP → BS**   $s \longleftarrow \frac{B s}{s^2 + \Omega_0^2}$
 
 ### Didactic interpretation
 
