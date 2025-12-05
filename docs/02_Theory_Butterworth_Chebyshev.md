@@ -49,7 +49,7 @@ These transformations produce the second pole-zero diagram in the interface.
 
 MATLAB applies the bilinear transform:
 
-s = (2/T) * (1 − z⁻¹) / (1 + z⁻¹)
+$$ s = (2/T) * (1 − z⁻¹) / (1 + z⁻¹) $$
 
 ## 6. References
 
