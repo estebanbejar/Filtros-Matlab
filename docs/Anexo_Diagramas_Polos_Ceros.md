@@ -8,7 +8,8 @@ Este anexo explica el significado de los dos diagramas de polos y ceros que apar
 
 El primer diagrama corresponde al *prototipo normalizado* de bajo paso (LP) con:
 
-- Frecuencia de corte \( \, \Omega_c = 1 \, \text{rad/s} \, \).
+- Frecuencia de corte 
+ $$ \Omega_c = 1 \, \text{rad/s} $$
 - Polos situados según la familia del filtro:
   - **Butterworth:** polos distribuidos uniformemente sobre un semicírculo en el semiplano izquierdo.
   - **Chebyshev Tipo I:** polos desplazados hacia el eje imaginario para obtener una transición más abrupta.
@@ -39,11 +40,11 @@ Estas transformaciones sustituyen la variable \( s \) del prototipo por una expr
 **Transformaciones típicas:**
 
 - LP → HP:
-  $$ s \longleftarrow rac{\Omega_c^2}{s} $$
+    $$ s \longleftarrow \frac{\Omega_c^2}{s} $$
 - LP → BP:
-  $$ s \longleftarrow rac{s^2 + \Omega_0^2}{B s} $$
+  $$ s \longleftarrow \frac{s^2 + \Omega_0^2}{B s} $$
 - LP → BS:
-  $$ s \longleftarrow rac{B s}{s^2 + \Omega_0^2} $$
+  $$ s \longleftarrow \frac{B s}{s^2 + \Omega_0^2} $$
 
 **Interpretación didáctica:**
 
