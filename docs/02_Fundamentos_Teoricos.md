@@ -14,7 +14,7 @@ Este documento resume los conceptos teóricos más relevantes para entender el f
 El diseño clásico de filtros IIR parte de **prototipos analógicos de bajo paso**. El proceso típico es:
 
 1. Diseñar un prototipo analógico de bajo paso normalizado, \(H_p(s)\), con:
-   - frecuencia de corte \(\Omega_c = 1\,\text{rad/s}\),
+   - frecuencia de corte $$\Omega_c = 1\,\text{rad/s}$$,
    - especificaciones de ondulación, atenuación, etc.
 
 2. Aplicar una **transformación de frecuencia** para obtener:
