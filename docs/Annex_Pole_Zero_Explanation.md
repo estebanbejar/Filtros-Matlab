@@ -40,11 +40,11 @@ These transformations replace the variable \( s \) by an expression that reshape
 
 ### Typical transformations
 
-- **LP → HP**   $s \longleftarrow \frac{\Omega_c^2}{s}$
+- **LP → HP**     $s \longleftarrow \frac{\Omega_c^2}{s}$
 
-- **LP → BP**   $s \longleftarrow \frac{s^2 + \Omega_0^2}{B s}$
+- **LP → BP**     $s \longleftarrow \frac{s^2 + \Omega_0^2}{B s}$
 
-- **LP → BS**   $s \longleftarrow \frac{B s}{s^2 + \Omega_0^2}$
+- **LP → BS**     $s \longleftarrow \frac{B s}{s^2 + \Omega_0^2}$
 
 ### Didactic interpretation
 
