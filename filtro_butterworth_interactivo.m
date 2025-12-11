@@ -95,25 +95,31 @@ function filtro_butterworth_interactivo()
 
         %---------------- Ventana de resultados ----------------
         resultFig = uifigure('Name', 'Resultados del Filtro Butterworth', ...
-                             'Position', [150 150 1200 600]);
+                             'Position', [150 150 1200 680]);
 
         % Botón Guardar PNG (abajo derecha)
         uibutton(resultFig, 'Text', 'Guardar PNG', ...
-            'Position', [1050 10 120 30], ...
+            'Position', [1050 70 120 30], ...
             'ButtonPushedFcn', @(btn,event) guardarPNG(resultFig));
 
         % ===== Respuesta en frecuencia (digital) =====
         [H, f] = freqz(b, a, 1024, fs);
 
-        % Izquierda: magnitud y fase (más estrechas)
-        ax1 = uiaxes(resultFig, 'Position', [40 340 540 220]);
+        % Izquierda: magnitud y fase
+        ax1 = uiaxes(resultFig, 'Position', [40 390 540 220]);
         plot(ax1, f, 20*log10(abs(H)), 'LineWidth', 1.5);
         title(ax1, 'Magnitud (dB)');
         xlabel(ax1, 'Frecuencia (Hz)');
         ylabel(ax1, 'Magnitud (dB)');
         grid(ax1, 'on');
+        % Asegurar al menos +10 dB para ver bien el rizado
+        yl = ylim(ax1);
+        if yl(2) < 10
+            yl(2) = 10;
+            ylim(ax1, yl);
+        end
         
-        ax2 = uiaxes(resultFig, 'Position', [40 80 540 220]);
+        ax2 = uiaxes(resultFig, 'Position', [40 130 540 220]);
         plot(ax2, f, angle(H)*180/pi, 'LineWidth', 1.5);
         title(ax2, 'Fase (grados)');
         xlabel(ax2, 'Frecuencia (Hz)');
@@ -154,8 +160,8 @@ function filtro_butterworth_interactivo()
         [z_a, p_a, k_a] = tf2zp(b_a, a_a);
 
         % ===== Derecha arriba: diagramas de polos y ceros =====
-        % Diagrama 1: prototipo LP (casi cuadrado)
-        ax3 = uiaxes(resultFig, 'Position', [600 330 320 260]);
+        % Diagrama 1: prototipo LP
+        ax3 = uiaxes(resultFig, 'Position', [600 380 320 260]);
         plot(ax3, real(p_lp), imag(p_lp), 'x', 'LineWidth', 1.5, 'MarkerSize', 10);
         hold(ax3, 'on');
         if ~isempty(z_lp)
@@ -175,7 +181,7 @@ function filtro_butterworth_interactivo()
         axis(ax3,'equal');
 
         % Diagrama 2: filtro analógico final
-        ax4 = uiaxes(resultFig, 'Position', [880 330 320 260]);
+        ax4 = uiaxes(resultFig, 'Position', [880 380 320 260]);
         plot(ax4, real(p_a), imag(p_a), 'x', 'LineWidth', 1.5, 'MarkerSize', 10);
         hold(ax4,'on');
         if ~isempty(z_a)
@@ -187,54 +193,75 @@ function filtro_butterworth_interactivo()
         titFiltro = sprintf('Filtro analógico %s', tipo);
         title(ax4, {titFiltro; 'plano s'});
         xlabel(ax4,'\sigma'); ylabel(ax4,'j\omega');
-        % rangos independientes para evitar "espagueti"
+        % rangos independientes
         re_max_a = 1.5*max([abs(real(p_a)); abs(real(z_a)); 1e-3]);
         if re_max_a < 0.5, re_max_a = 0.5; end
         xlim(ax4,[-re_max_a re_max_a]);
         im_max_a = 1.1*max([abs(imag(p_a)); abs(imag(z_a)); 1e-3]);
         ylim(ax4,[-im_max_a im_max_a]);
-        % sin axis equal aquí
 
-        % ===== H(s) del prototipo (como en Chebyshev) =====
-        Hlatex = tf_s_to_latex(b_lp, a_lp);
+        % ===== H(s) del prototipo y H(s) real =====
+        % Ajuste de tamaño de fuente según el orden máximo
         ordenProt = length(a_lp) - 1;
-        if ordenProt <= 6
+        ordenReal = length(a_a)  - 1;
+        ordenMax  = max(ordenProt, ordenReal);
+        if ordenMax <= 6
             fontSize = 18;
-        elseif ordenProt <= 10
+        elseif ordenMax <= 10
             fontSize = 16;
         else
             fontSize = 14;
         end
 
-        axHs = uiaxes(resultFig, 'Position', [40 10 1120 60]);
-        axHs.Visible = 'off';
-        axis(axHs,[0 1 0 1]);
+        HlatexProto = tf_s_to_latex(b_lp, a_lp, 'H_P');   % Prototipo
+        HlatexReal  = tf_s_to_latex(b_a,  a_a,  'H_A');   % Analógico real
 
-        text(axHs, 0.5, 0.5, Hlatex, ...
+        % Eje para H_P(s)
+        axHs1 = uiaxes(resultFig, 'Position', [40 70 1120 40]);
+        axHs1.Visible = 'off';
+        axis(axHs1,[0 1 0 1]);
+        text(axHs1, 0.5, 0.5, HlatexProto, ...
              'Interpreter','latex', ...
              'HorizontalAlignment','center', ...
              'FontSize', fontSize);
 
-        % ===== Información numérica =====
+        % Eje para H_A(s)
+        axHs2 = uiaxes(resultFig, 'Position', [40 20 1120 40]);
+        axHs2.Visible = 'off';
+        axis(axHs2,[0 1 0 1]);
+        text(axHs2, 0.5, 0.5, HlatexReal, ...
+             'Interpreter','latex', ...
+             'HorizontalAlignment','center', ...
+             'FontSize', fontSize);
+
+
+        % ===== Información numérica (coeficientes digitales) =====
         infoStr = sprintf(['Tipo de filtro: %s\n' ...
                            'Orden: %d\n' ...
                            'Frec. Corte: %s Hz\n' ...
                            'Fs: %d Hz\n\n' ...
-                           'Coeficientes del Numerador (b):\n%s\n\n' ...
-                           'Coeficientes del Denominador (a):\n%s'], ...
+                           'Coeficientes del Numerador digital (b):\n%s\n\n' ...
+                           'Coeficientes del Denominador digital (a):\n%s'], ...
                           tipo, orden, mat2str(frec), fs, ...
                           mat2str(b), mat2str(a));
-        uitextarea(resultFig, 'Position', [620 80 550 200], ...
+        uitextarea(resultFig, 'Position', [620 130 550 200], ...
                    'Value', infoStr, 'Editable', 'off', 'FontSize', 11);
     end
 end
 
 
-function Hlatex = tf_s_to_latex(b,a)
-    % Construye H(s) = (num)/(den) en LaTeX, polinomios en s
+function Hlatex = tf_s_to_latex(b,a,varargin)
+    % Construye H_x(s) = (num)/(den) en LaTeX, polinomios en s
+    % name opcional: 'H', 'H_P', 'H_A', etc.
+    if nargin < 3
+        name = 'H';
+    else
+        name = varargin{1};
+    end
+
     numStr = poly_to_latex_s(b);
     denStr = poly_to_latex_s(a);
-    Hlatex = sprintf('$H(s)=\\frac{%s}{%s}$', numStr, denStr);
+    Hlatex = sprintf('$%s(s)=\\frac{%s}{%s}$', name, numStr, denStr);
 end
 
 function s = poly_to_latex_s(c)
@@ -246,32 +273,67 @@ function s = poly_to_latex_s(c)
         if abs(coef) < 1e-12, continue; end
         pow = n - (k - 1);   % exponente de s
         coefAbs = abs(coef);
+
         % signo
         if isempty(parts)
             if coef < 0, signStr = '-'; else, signStr = ''; end
         else
             if coef < 0, signStr = ' - '; else, signStr = ' + '; end
         end
-        % término
+
+        % === Construcción del término ===
         if pow == 0
-            term = sprintf('%s%.3g', signStr, coefAbs);
+            % Término independiente
+            coefStr = formatCoeffLatex(coefAbs);
+            term = sprintf('%s%s', signStr, coefStr);
+
         elseif pow == 1
+            % Término en s
             if abs(coefAbs - 1) < 1e-12
+                % Coeficiente ~1 -> solo "s"
                 term = sprintf('%ss', signStr);
             else
-                term = sprintf('%s%.3g\\,s', signStr, coefAbs);
+                coefStr = formatCoeffLatex(coefAbs);
+                term = sprintf('%s%s\\,s', signStr, coefStr);
             end
+
         else
+            % Término en s^pow
             if abs(coefAbs - 1) < 1e-12
                 term = sprintf('%ss^{%d}', signStr, pow);
             else
-                term = sprintf('%s%.3g\\,s^{%d}', signStr, coefAbs, pow);
+                coefStr = formatCoeffLatex(coefAbs);
+                term = sprintf('%s%s\\,s^{%d}', signStr, coefStr, pow);
             end
         end
+
         parts{end+1} = term; %#ok<AGROW>
     end
     s = strjoin(parts,'');
 end
+
+function coeffStr = formatCoeffLatex(x)
+    % Devuelve el coeficiente en formato LaTeX.
+    % Ejemplos:
+    %  1234      -> '1.23\times10^{3}'
+    %  0.00567   -> '5.67\times10^{-3}'
+    %  1.23      -> '1.23'
+
+    numStr = sprintf('%.3g', x);   % notación compacta (puede llevar 'e')
+    ePos = strfind(numStr, 'e');
+
+    if isempty(ePos)
+        % Sin exponente -> se deja tal cual
+        coeffStr = numStr;
+    else
+        % Forma aeb -> a\times10^{b}
+        mant = numStr(1:ePos-1);
+        expStr = numStr(ePos+1:end);   % ej. '+04' o '-11'
+        expVal = str2double(expStr);
+        coeffStr = sprintf('%s\\times10^{%d}', mant, expVal);
+    end
+end
+
 
 function guardarPNG(figHandle)
     [file, path] = uiputfile('figura.png', 'Guardar como PNG');
@@ -289,7 +351,6 @@ function guardarPNG(figHandle)
         F = getframe(figHandle);
         imwrite(F.cdata, filename);
     catch ME
-        warning('No se ha podido capturar la figura completa:', '%s', ME.message);
+        warning('No se ha podido capturar la figura completa: %s', ME.message);
     end
 end
-

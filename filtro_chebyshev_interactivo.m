@@ -50,15 +50,15 @@ function filtro_chebyshev_interactivo(tipoChebyInicial)
             'Position', [250 265 150 30], ...
             'Limits', [1 Inf], 'Value', 8000);
 
-    % Ondulación (dB)
-    uilabel(fig, 'Text', 'Ondulación/Atenuación (dB):', ...
+    % Ondulación / Atenuación (dB)
+    uilabel(fig, 'Text', 'Ondulación/Atenuación* (dB):', ...
             'Position', [50 210 200 30]);
 
     rippleField = uieditfield(fig, 'numeric', ...
             'Position', [250 215 150 30], ...
             'Limits', [0 Inf], 'Value', 1);
 
-    % Modo de visualización (igual que Butterworth)
+    % Modo de visualización
     uilabel(fig, 'Text', 'Modo de Visualización:', ...
             'Position', [50 160 150 30]);
     outputMode = uidropdown(fig, ...
@@ -70,6 +70,11 @@ function filtro_chebyshev_interactivo(tipoChebyInicial)
     uibutton(fig, 'Text', 'Generar Filtro', ...
              'Position', [100 90 250 40], ...
              'ButtonPushedFcn', @(btn, event)generarFiltro());
+
+    uilabel(fig, 'Text', '* Tipo I: Ondulación sugerida < 3 dB', ...
+            'Position', [75 50 400 30],'FontAngle', 'italic');
+    uilabel(fig, 'Text', '*Tipo II: Atenuación sugerida > 40 dB', ...
+            'Position', [75 30 400 30],'FontAngle', 'italic');
 
     % ==========================================================
     %   Función anidada: generar filtro y mostrar resultados
@@ -142,36 +147,39 @@ function filtro_chebyshev_interactivo(tipoChebyInicial)
                 end
             end
 
-            % === Modo fvtool, igual que en Butterworth ===
+            % === Modo fvtool ===
             if strcmp(modo, 'Herramienta MATLAB (fvtool)')
                 fvtool(b, a);
                 return;
             end
 
             %---------------- Ventana de resultados ----------------
-            %---------------- Ventana de resultados ----------------
             resultFig = uifigure('Name', 'Resultados del Filtro Chebyshev', ...
-                                 'Position', [150 150 1200 600]);
+                                 'Position', [150 150 1200 650]); % más alta
 
-            % Botón Guardar PNG (abajo a la derecha)
+            % Botón Guardar PNG (abajo derecha)
             uibutton(resultFig, 'Text', 'Guardar PNG', ...
-                'Position', [1050 10 120 30], ...
+                'Position', [1050 70 120 30], ...
                 'ButtonPushedFcn', @(btn,event) guardarPNG(resultFig));
 
             % ===== Respuesta en frecuencia (digital) =====
             [H, f] = freqz(b, a, 1024, fs);
 
-            % --- PARTE IZQUIERDA: Magnitud y fase (más estrechas) ---
-            % Magnitud
-            ax1 = uiaxes(resultFig, 'Position', [40 340 540 220]);
+            % --- PARTE IZQUIERDA: Magnitud y fase ---
+            ax1 = uiaxes(resultFig, 'Position', [40 390 540 220]);
             plot(ax1, f, 20*log10(abs(H)), 'LineWidth', 1.5);
             title(ax1, 'Magnitud (dB)');
             xlabel(ax1, 'Frecuencia (Hz)');
             ylabel(ax1, 'Magnitud (dB)');
             grid(ax1, 'on');
+            % Asegurar al menos +10 dB para ver bien el rizado
+            yl = ylim(ax1);
+            if yl(2) < 10
+                yl(2) = 10;
+                ylim(ax1, yl);
+            end
 
-            % Fase
-            ax2 = uiaxes(resultFig, 'Position', [40 80 540 220]);
+            ax2 = uiaxes(resultFig, 'Position', [40 130 540 220]);
             plot(ax2, f, angle(H)*180/pi, 'LineWidth', 1.5);
             title(ax2, 'Fase (grados)');
             xlabel(ax2, 'Frecuencia (Hz)');
@@ -189,7 +197,7 @@ function filtro_chebyshev_interactivo(tipoChebyInicial)
             [b_lp, a_lp] = zp2tf(z_lp, p_lp, k_lp);
 
             % ===== FILTRO ANALÓGICO RESULTANTE (LP/HP/BP/BS) =====
-            Omega = 2*pi*frec;   % Hz -> rad/s (solo para visualización)
+            Omega = 2*pi*frec;   % Hz -> rad/s
 
             switch tipo
                 case 'Pasa bajos'
@@ -216,9 +224,9 @@ function filtro_chebyshev_interactivo(tipoChebyInicial)
 
             [z_a, p_a, ~] = tf2zp(b_a, a_a);
 
-            % --- PARTE DERECHA ARRIBA: Diagramas casi cuadrados ---
-            % Diagrama 1: prototipo LP (más ancho)
-            ax3 = uiaxes(resultFig, 'Position', [600 330 320 260]);
+            % --- PARTE DERECHA ARRIBA: Diagramas de polos y ceros ---
+            % Prototipo LP
+            ax3 = uiaxes(resultFig, 'Position', [600 380 320 260]);
             plot(ax3, real(p_lp), imag(p_lp), 'x', 'LineWidth', 1.5, 'MarkerSize', 10);
             hold(ax3,'on');
             if ~isempty(z_lp)
@@ -229,19 +237,16 @@ function filtro_chebyshev_interactivo(tipoChebyInicial)
             grid(ax3,'on');
             title(ax3, {tituloProto; 'plano s'});
             xlabel(ax3,'\sigma'); ylabel(ax3,'j\omega');
-            
+
             re_max_lp = 1.5*max([abs(real(p_lp)); abs(real(z_lp)); 1e-3]);
             im_max_lp = 1.5*max([abs(imag(p_lp)); abs(imag(z_lp)); 1e-3]);
-            
-            % Usar el mismo rango en σ y jω para que el diagrama no quede estrecho
             lim_lp = max(re_max_lp, im_max_lp);
             xlim(ax3,[-lim_lp lim_lp]);
             ylim(ax3,[-lim_lp lim_lp]);
             axis(ax3,'equal');
 
-            
-            % Diagrama 2: filtro analógico final (más ancho)
-            ax4 = uiaxes(resultFig, 'Position', [880 330 320 260]);
+            % Filtro analógico real
+            ax4 = uiaxes(resultFig, 'Position', [880 380 320 260]);
             plot(ax4, real(p_a), imag(p_a), 'x', 'LineWidth', 1.5, 'MarkerSize', 10);
             hold(ax4,'on');
             if ~isempty(z_a)
@@ -252,135 +257,136 @@ function filtro_chebyshev_interactivo(tipoChebyInicial)
             grid(ax4,'on');
             title(ax4, {sprintf('Filtro analógico %s', tipo); 'plano s'});
             xlabel(ax4,'\sigma'); ylabel(ax4,'j\omega');
-            
-            % Rango horizontal: sólo en función de las partes reales
+
             re_max_a = 1.5*max([abs(real(p_a)); abs(real(z_a)); 1e-3]);
-            % Aseguramos un mínimo para que no quede excesivamente estrecho
-            if re_max_a < 0.5
-                re_max_a = 0.5;
-            end
+            if re_max_a < 0.5, re_max_a = 0.5; end
             xlim(ax4, [-re_max_a, re_max_a]);
-            
-            % Rango vertical: sólo en función de las partes imaginarias
+
             im_max_a = 1.1*max([abs(imag(p_a)); abs(imag(z_a)); 1e-3]);
             ylim(ax4, [-im_max_a, im_max_a]);
-            
-            % Sin 'axis equal' para no comprimir el eje horizontal
 
-
-
-
-            % ====== FUNCIÓN DE TRANSFERENCIA ANALÓGICA H(s) ======
-            % usamos el prototipo LP, igual que en Butterworth
-            [b_s, a_s] = zp2tf(z_lp, p_lp, k_lp);
-            Hlatex = tf_s_to_latex(b_s, a_s);
-
-            % Ajuste tamaño de letra según orden
-            ordenProt = length(a_s) - 1;
-            if ordenProt <= 6
+            % ===== H(s) del prototipo y H(s) real =====
+            ordenMax = max(length(a_lp), length(a_a)) - 1;
+            if ordenMax <= 6
                 fontSize = 18;
-            elseif ordenProt <= 10
+            elseif ordenMax <= 10
                 fontSize = 16;
             else
                 fontSize = 14;
             end
 
-            axHs = uiaxes(resultFig, 'Position', [40 10 1120 60]);
-            axHs.Visible = 'off';
-            axis(axHs,[0 1 0 1]);
+            HlatexProto = tf_s_to_latex(b_lp, a_lp, 'H_P');
+            HlatexReal  = tf_s_to_latex(b_a,  a_a,  'H_A');
 
-            text(axHs, 0.5, 0.5, Hlatex, ...
+            % Eje para H_P(s)
+            axHs1 = uiaxes(resultFig, 'Position', [40 70 1120 50]);
+            axHs1.Visible = 'off';
+            axis(axHs1,[0 1 0 1]);
+            text(axHs1, 0.5, 0.5, HlatexProto, ...
                  'Interpreter','latex', ...
                  'HorizontalAlignment','center', ...
                  'FontSize', fontSize);
 
-            % --- PARTE DERECHA ABAJO: Coeficientes ---
+            % Eje para H_A(s)
+            axHs2 = uiaxes(resultFig, 'Position', [40 20 1120 50]);
+            axHs2.Visible = 'off';
+            axis(axHs2,[0 1 0 1]);
+            text(axHs2, 0.5, 0.5, HlatexReal, ...
+                 'Interpreter','latex', ...
+                 'HorizontalAlignment','center', ...
+                 'FontSize', fontSize);
+
+            % --- Coeficientes digitales ---
             infoStr = sprintf(['Tipo de filtro: %s\n' ...
                                'Tipo Chebyshev: %s\n' ...
                                'Orden: %d\n' ...
                                'Frec. Corte: %s Hz\n' ...
                                'Fs: %d Hz\n' ...
-                               'Ondulación (dB): %.3g\n\n' ...
-                               'Coeficientes del Numerador (b):\n%s\n\n' ...
-                               'Coeficientes del Denominador (a):\n%s'], ...
+                               'Ondulación/Atenuación (dB): %.3g\n\n' ...
+                               'Coeficientes del Numerador digital (b):\n%s\n\n' ...
+                               'Coeficientes del Denominador digital (a):\n%s'], ...
                                tipo, cheby, orden, mat2str(frec), fs, ripple, ...
                                mat2str(b), mat2str(a));
 
-            uitextarea(resultFig, 'Position', [620 80 550 200], ...
+            uitextarea(resultFig, 'Position', [620 130 550 200], ...
                        'Value', infoStr, 'Editable', 'off', 'FontSize', 11);
-
 
         catch ME
             uialert(fig, sprintf('Error al generar el filtro:\n%s', ME.message), ...
                     'Error');
         end
     end
-
 end
 
-
 % ==========================================================
-%        Funciones auxiliares (mismas que Butterworth)
+%        Funciones auxiliares (compartidas)
 % ==========================================================
-function Hlatex = tf_s_to_latex(b,a)
-    % Construye H(s) = (num)/(den) en LaTeX, polinomios en s
-
+function Hlatex = tf_s_to_latex(b,a,varargin)
+    % Construye H_x(s) = num/den en LaTeX
+    if nargin < 3
+        name = 'H';
+    else
+        name = varargin{1};
+    end
     numStr = poly_to_latex_s(b);
     denStr = poly_to_latex_s(a);
-
-    Hlatex = sprintf('$H(s)=\\frac{%s}{%s}$', numStr, denStr);
+    Hlatex = sprintf('$%s(s)=\\frac{%s}{%s}$', name, numStr, denStr);
 end
 
 function s = poly_to_latex_s(c)
-    % c: vector de coeficientes en s, de grado n a 0 (como devuelve zp2tf)
+    % c: vector de coeficientes en s, de grado n a 0
     n = numel(c) - 1;
     parts = {};
-
     for k = 1:numel(c)
         coef = c(k);
-        if abs(coef) < 1e-12
-            continue;
-        end
-
-        pow = n - (k - 1);   % exponente de s
+        if abs(coef) < 1e-12, continue; end
+        pow = n - (k - 1);
         coefAbs = abs(coef);
 
         % signo
         if isempty(parts)
-            if coef < 0
-                signStr = '-';
-            else
-                signStr = '';
-            end
+            if coef < 0, signStr = '-'; else, signStr = ''; end
         else
-            if coef < 0
-                signStr = ' - ';
-            else
-                signStr = ' + ';
-            end
+            if coef < 0, signStr = ' - '; else, signStr = ' + '; end
         end
 
         % término
         if pow == 0
-            term = sprintf('%s%.3g', signStr, coefAbs);
+            coefStr = formatCoeffLatex(coefAbs);
+            term = sprintf('%s%s', signStr, coefStr);
         elseif pow == 1
             if abs(coefAbs - 1) < 1e-12
                 term = sprintf('%ss', signStr);
             else
-                term = sprintf('%s%.3g\\,s', signStr, coefAbs);
+                coefStr = formatCoeffLatex(coefAbs);
+                term = sprintf('%s%s\\,s', signStr, coefStr);
             end
         else
             if abs(coefAbs - 1) < 1e-12
                 term = sprintf('%ss^{%d}', signStr, pow);
             else
-                term = sprintf('%s%.3g\\,s^{%d}', signStr, coefAbs, pow);
+                coefStr = formatCoeffLatex(coefAbs);
+                term = sprintf('%s%s\\,s^{%d}', signStr, coefStr, pow);
             end
         end
-
         parts{end+1} = term; %#ok<AGROW>
     end
-
     s = strjoin(parts,'');
+end
+
+function coeffStr = formatCoeffLatex(x)
+    % Devuelve el coeficiente en formato LaTeX:
+    % 1.64e+04 -> '1.64\times10^{4}'
+    numStr = sprintf('%.3g', x);
+    ePos = strfind(numStr, 'e');
+    if isempty(ePos)
+        coeffStr = numStr;
+    else
+        mant = numStr(1:ePos-1);
+        expStr = numStr(ePos+1:end);   % +04, -11, etc.
+        expVal = str2double(expStr);
+        coeffStr = sprintf('%s\\times10^{%d}', mant, expVal);
+    end
 end
 
 function guardarPNG(figHandle)
@@ -390,16 +396,12 @@ function guardarPNG(figHandle)
     end
     filename = fullfile(path, file);
 
-    % Aseguramos que la ventana está al frente y totalmente dibujada
-    figure(figHandle);              % trae el uifigure al frente
-    drawnow;                        % fuerza actualización gráfica
-
+    figure(figHandle);
+    drawnow;
     try
-        % Capturar la imagen de toda la ventana (tipo "screenshot")
         F = getframe(figHandle);
         imwrite(F.cdata, filename);
     catch ME
-        warning('No se ha podido capturar la figura completa:', '%s', ME.message);
+        warning('No se ha podido capturar la figura completa: %s', ME.message);
     end
 end
-
